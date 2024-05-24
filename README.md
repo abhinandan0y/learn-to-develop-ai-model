@@ -86,13 +86,15 @@ Fine-tune the model on more specific data if necessary to improve performance in
 #### Step 7: Deploy the Model
 ```
 Export the Model: Save the trained model.
-python
-Copy code
+```
+```python
+
 model.save_pretrained('./model')
 tokenizer.save_pretrained('./tokenizer')
 Set Up an API: Use frameworks like Flask or FastAPI to create an endpoint for your model.
-python
-Copy code
+```
+```python
+
 from flask import Flask, request, jsonify
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
