@@ -31,11 +31,11 @@ Seq2Seq with Attention: A sequence-to-sequence model with attention mechanism ca
 Transformer Models: Models like GPT (Generative Pre-trained Transformer) are very effective for generating conversational text.
 ```
 #### Step 4: Train the Model
-```
+
 Set Up the Environment: Use frameworks such as TensorFlow or PyTorch.
 Build the Model: Define the architecture. For example, using a Transformer model:
-python
-Copy code
+```python
+
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
 model = GPT2LMHeadModel.from_pretrained('gpt2')
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
@@ -74,7 +74,9 @@ trainer = Trainer(
 )
 
 trainer.train()
+```
 #### Step 5: Evaluate the Model
+```
 Evaluate the model using metrics like perplexity, BLEU score, or ROUGE score to understand its performance.
 ```
 #### Step 6: Fine-tune the Model
