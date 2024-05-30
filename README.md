@@ -22,6 +22,162 @@ Preprocessing steps:
 Cleaning: Remove any irrelevant data, HTML tags, and special characters.
 Tokenization: Break down sentences into words or tokens.
 Normalization: Convert all text to lower case and remove stop words if necessary.
+
+#################################################
+To preprocess the datasets from the Cornell Movie-Dialogs Corpus, ConvAI2, and OpenSubtitles, you can follow the steps of cleaning, tokenization, and normalization. Below is a sample code in Python using the Natural Language Toolkit (nltk) and the regular expression library (re) for these preprocessing tasks. I'll provide code snippets for each dataset and preprocessing step.
+
+Prerequisites
+First, install the necessary libraries if you haven't already:
+
+bash
+Copy code
+pip install nltk
+Import Libraries
+python
+Copy code
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+
+nltk.download('punkt')
+nltk.download('stopwords')
+Cleaning Function
+This function removes HTML tags, special characters, and irrelevant data:
+
+python
+Copy code
+def clean_text(text):
+    # Remove HTML tags
+    text = re.sub(r'<.*?>', '', text)
+    # Remove special characters and digits
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    return text
+Tokenization Function
+This function breaks down sentences into words or tokens:
+
+python
+Copy code
+def tokenize_text(text):
+    # Sentence tokenization
+    sentences = sent_tokenize(text)
+    # Word tokenization
+    words = [word_tokenize(sentence) for sentence in sentences]
+    return words
+Normalization Function
+This function converts text to lowercase and removes stop words:
+
+python
+Copy code
+def normalize_text(words):
+    stop_words = set(stopwords.words('english'))
+    normalized_words = []
+    for sentence in words:
+        normalized_sentence = [word.lower() for word in sentence if word.lower() not in stop_words]
+        normalized_words.append(normalized_sentence)
+    return normalized_words
+Cornell Movie-Dialogs Corpus
+Assuming you have downloaded and extracted the dataset, you can process it as follows:
+
+python
+Copy code
+# Load the dataset
+with open('path/to/movie_lines.txt', 'r', encoding='ISO-8859-1') as file:
+    lines = file.readlines()
+
+# Process each line
+processed_lines = []
+for line in lines:
+    cleaned_line = clean_text(line)
+    tokenized_line = tokenize_text(cleaned_line)
+    normalized_line = normalize_text(tokenized_line)
+    processed_lines.append(normalized_line)
+ConvAI2 Dataset
+Assuming you have downloaded the dataset, process it similarly:
+
+python
+Copy code
+# Load the dataset
+with open('path/to/convai2.txt', 'r', encoding='utf-8') as file:
+    conversations = file.readlines()
+
+# Process each conversation
+processed_conversations = []
+for conversation in conversations:
+    cleaned_conversation = clean_text(conversation)
+    tokenized_conversation = tokenize_text(cleaned_conversation)
+    normalized_conversation = normalize_text(tokenized_conversation)
+    processed_conversations.append(normalized_conversation)
+OpenSubtitles Dataset
+Assuming you have downloaded the dataset, process it similarly:
+
+python
+Copy code
+# Load the dataset
+with open('path/to/opensubtitles.txt', 'r', encoding='utf-8') as file:
+    subtitles = file.readlines()
+
+# Process each subtitle line
+processed_subtitles = []
+for subtitle in subtitles:
+    cleaned_subtitle = clean_text(subtitle)
+    tokenized_subtitle = tokenize_text(cleaned_subtitle)
+    normalized_subtitle = normalize_text(tokenized_subtitle)
+    processed_subtitles.append(normalized_subtitle)
+Full Example
+Combining everything into a complete example:
+
+python
+Copy code
+import re
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize, sent_tokenize
+
+nltk.download('punkt')
+nltk.download('stopwords')
+
+def clean_text(text):
+    text = re.sub(r'<.*?>', '', text)
+    text = re.sub(r'[^a-zA-Z\s]', '', text)
+    return text
+
+def tokenize_text(text):
+    sentences = sent_tokenize(text)
+    words = [word_tokenize(sentence) for sentence in sentences]
+    return words
+
+def normalize_text(words):
+    stop_words = set(stopwords.words('english'))
+    normalized_words = []
+    for sentence in words:
+        normalized_sentence = [word.lower() for word in sentence if word.lower() not in stop_words]
+        normalized_words.append(normalized_sentence)
+    return normalized_words
+
+def process_dataset(file_path):
+    with open(file_path, 'r', encoding='utf-8') as file:
+        lines = file.readlines()
+
+    processed_lines = []
+    for line in lines:
+        cleaned_line = clean_text(line)
+        tokenized_line = tokenize_text(cleaned_line)
+        normalized_line = normalize_text(tokenized_line)
+        processed_lines.append(normalized_line)
+    
+    return processed_lines
+
+# Example usage
+cornell_data = process_dataset('path/to/movie_lines.txt')
+convai2_data = process_dataset('path/to/convai2.txt')
+opensubtitles_data = process_dataset('path/to/opensubtitles.txt')
+Links to Datasets
+Cornell Movie-Dialogs Corpus: Download link
+ConvAI2 Dataset: Download link
+OpenSubtitles Dataset: Download link
+Ensure you have the datasets downloaded and the paths correctly set in the process_dataset function calls. The provided functions handle the preprocessing steps for cleaning, tokenization, and normalization.
+###########################################################
 ```
 #### Step 3: Choose a Model Architecture
 ```
