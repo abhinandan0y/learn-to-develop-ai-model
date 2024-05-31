@@ -1,7 +1,7 @@
 #### Prepare and Preprocess the Data
 
 ```python
-Copy code
+
 import tensorflow as tf
 import numpy as np
 import nltk
@@ -52,7 +52,7 @@ test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
 Now that we have our data pipeline, we can define and train the model using this pipeline.
 
 ```python
-Copy code
+
 # Define the model
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(input_dim=10000, output_dim=64, input_length=100),
@@ -73,7 +73,7 @@ model.fit(train_dataset, epochs=10, validation_data=test_dataset)
 After training, convert the model to TensorFlow Lite format as before:
 
 ```python
-Copy code
+
 # Convert the model to TFLite format
 converter = tf.lite.TFLiteConverter.from_keras_model(model)
 tflite_model = converter.convert()
@@ -87,7 +87,7 @@ with open('model.tflite', 'wb') as f:
 Ensure you have the TFLite model in your Android app's assets directory. Then, load and run the model in your Android app:
 
 ```java
-Copy code
+
 // Load the model
 private MappedByteBuffer loadModelFile() throws IOException {
     AssetFileDescriptor fileDescriptor = getAssets().openFd("model.tflite");
