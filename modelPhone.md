@@ -53,3 +53,46 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # Train the model
 model.fit(train_data, train_labels, epochs=10, validation_split=0.2)
 ```
+
+#### Convert the Model to TFLite
+After training, convert the model to TensorFlow Lite format:
+
+```python
+
+# Convert the model to TFLite format
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+tflite_model = converter.convert()
+
+# Save the model
+with open('model.tflite', 'wb') as f:
+    f.write(tflite_model)
+```
+#### Integrate the TFLite Model in an Android App
+Ensure you have the TFLite model in your Android app's assets directory. Then, load and run the model in your Android app:
+
+```java
+
+// Load the model
+private MappedByteBuffer loadModelFile() throws IOException {
+    AssetFileDescriptor fileDescriptor = getAssets().openFd("model.tflite");
+    FileInputStream inputStream = new FileInputStream(fileDescriptor.getFileDescriptor());
+    FileChannel fileChannel = inputStream.getChannel();
+    long startOffset = fileDescriptor.getStartOffset();
+    long declaredLength = fileDescriptor.getDeclaredLength();
+    return fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+}
+
+// Run inference
+try (Interpreter interpreter = new Interpreter(loadModelFile())) {
+    // Prepare input and output buffers
+    float[][] input = new float[1][100];  // Ensure this matches the input shape
+    float[][] output = new float[1][1];   // Ensure this matches the output shape
+
+    // Run the model
+    interpreter.run(input, output);
+    
+    // Process the output as needed
+    float result = output[0][0];
+    boolean isPositive = result > 0.5;  // Example threshold for binary classification
+}
+```
