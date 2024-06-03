@@ -98,12 +98,30 @@ Postprocess the output to generate a readable response.
 Example Code for Testing the Model
 Here's an example of how to achieve this using the TensorFlow Lite interpreter:
 
-
-
 import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+import nltk
+from nltk.corpus import movie_reviews
+
+# Download the NLTK dataset
+nltk.download('movie_reviews')
+
+# Initialize empty lists to hold sentences and their corresponding labels
+sentences = []
+labels = []
+
+# Iterate over the movie reviews, labeling sentences correctly
+for fileid in movie_reviews.fileids():
+    label = 1 if fileid.startswith('pos') else 0
+    for sentence in movie_reviews.sents(fileid):
+        sentences.append(" ".join(sentence))
+        labels.append(label)
+
+# Define the tokenizer and fit on the sentences
+tokenizer = Tokenizer(num_words=10000)
+tokenizer.fit_on_texts(sentences)
 
 # Load the TFLite model
 interpreter = tf.lite.Interpreter(model_path="model.tflite")
@@ -112,13 +130,6 @@ interpreter.allocate_tensors()
 # Get input and output details
 input_details = interpreter.get_input_details()
 output_details = interpreter.get_output_details()
-
-# Define the same tokenizer used during training
-tokenizer = Tokenizer(num_words=10000)
-# Normally you'd need to load the tokenizer's state that was used during training.
-# Here, we'll fit it again on the training data for simplicity, but it may not be the exact same.
-sentences = [" ".join(movie_reviews.words(fileid)) for fileid in movie_reviews.fileids()]
-tokenizer.fit_on_texts(sentences)
 
 # Function to preprocess user input
 def preprocess_input(user_input):
@@ -149,6 +160,7 @@ user_input = "I love this movie!"
 response = generate_response(user_input)
 print(f"User input: {user_input}")
 print(f"Model response: {response}")
+
 Detailed Steps
 Load the TFLite Model:
 
