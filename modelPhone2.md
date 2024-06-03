@@ -124,7 +124,7 @@ tokenizer.fit_on_texts(sentences)
 def preprocess_input(user_input):
     sequence = tokenizer.texts_to_sequences([user_input])
     padded_sequence = pad_sequences(sequence, maxlen=100)
-    return padded_sequence
+    return padded_sequence.astype(np.float32)  # Convert to float32
 
 # Function to generate a response from the model
 def generate_response(user_input):
