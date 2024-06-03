@@ -88,7 +88,7 @@ except Exception as e:
 
 ```
 ### Test this model for response to user text 
-```
+```python
 To test the converted TensorFlow Lite model for generating responses to user text, follow these steps:
 
 Load the TFLite model into an interpreter.
@@ -98,7 +98,7 @@ Postprocess the output to generate a readable response.
 Example Code for Testing the Model
 Here's an example of how to achieve this using the TensorFlow Lite interpreter:
 
-python
+
 
 import tensorflow as tf
 import numpy as np
