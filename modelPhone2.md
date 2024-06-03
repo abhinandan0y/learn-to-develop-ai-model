@@ -62,6 +62,29 @@ model = tf.keras.Sequential([
 # Compile the model
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
+# Train the model using the tf.data pipeline
+model.fit(train_dataset, epochs=10, validation_data=test_dataset)
+
+#So, it is important to monitor the model’s performance on a validation set during training and stop training when the validation performance starts to decay.
+
+# Convert the model to TFLite format with Select TF Ops
+converter = tf.lite.TFLiteConverter.from_keras_model(model)
+converter.optimizations = [tf.lite.Optimize.DEFAULT]
+converter.target_spec.supported_ops = [
+    tf.lite.OpsSet.TFLITE_BUILTINS,  # Enable TensorFlow Lite ops.
+    tf.lite.OpsSet.SELECT_TF_OPS  # Enable TensorFlow ops.
+]
+converter._experimental_lower_tensor_list_ops = False
+
+# Convert the model
+try:
+    tflite_model = converter.convert()
+    # Save the TFLite model
+    with open('model.tflite', 'wb') as f:
+        f.write(tflite_model)
+    print("Model converted successfully and saved as 'model.tflite'.")
+except Exception as e:
+    print(f"Model conversion failed: {e}")
 
 ```
 #### Integrate the TFLite Model in an Android App
