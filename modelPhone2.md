@@ -11,6 +11,9 @@ from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 # Download the NLTK dataset
+nltk.download('punkt')
+#nltk.download('stopwords')
+#nltk.download('corpus')
 nltk.download('movie_reviews')
 
 # Initialize empty lists to hold sentences and their corresponding labels
@@ -46,17 +49,12 @@ BATCH_SIZE = 32
 
 train_dataset = train_dataset.shuffle(len(train_data)).batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(buffer_size=AUTOTUNE)
-```
-
-#### Model Training with Parallel Data Loading
-Now that we have our data pipeline, we can define and train the model using this pipeline.
-
-```python
 
 # Define the model
 model = tf.keras.Sequential([
     tf.keras.layers.Embedding(input_dim=10000, output_dim=64, input_length=100),
-    tf.keras.layers.LSTM(64),
+    tf.keras.layers.LSTM(64, return_sequences=False),
+    #    tf.keras.layers.LSTM(32),  # Simplified LSTM layer
     tf.keras.layers.Dense(64, activation='relu'),
     tf.keras.layers.Dense(1, activation='sigmoid')
 ])
@@ -64,23 +62,6 @@ model = tf.keras.Sequential([
 # Compile the model
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-
-#### Train the model using the tf.data pipeline
-model.fit(train_dataset, epochs=10, validation_data=test_dataset)
-```
-
-### Converting the Model to TFLite
-After training, convert the model to TensorFlow Lite format as before:
-
-```python
-
-# Convert the model to TFLite format
-converter = tf.lite.TFLiteConverter.from_keras_model(model)
-tflite_model = converter.convert()
-
-# Save the model
-with open('model.tflite', 'wb') as f:
-    f.write(tflite_model)
 
 ```
 #### Integrate the TFLite Model in an Android App
