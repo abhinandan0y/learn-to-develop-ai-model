@@ -87,6 +87,90 @@ except Exception as e:
     print(f"Model conversion failed: {e}")
 
 ```
+### Test this model for response to user text 
+```
+To test the converted TensorFlow Lite model for generating responses to user text, follow these steps:
+
+Load the TFLite model into an interpreter.
+Preprocess the user input text to match the format used during training.
+Run the inference using the TFLite interpreter.
+Postprocess the output to generate a readable response.
+Example Code for Testing the Model
+Here's an example of how to achieve this using the TensorFlow Lite interpreter:
+
+python
+
+import tensorflow as tf
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+# Load the TFLite model
+interpreter = tf.lite.Interpreter(model_path="model.tflite")
+interpreter.allocate_tensors()
+
+# Get input and output details
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
+
+# Define the same tokenizer used during training
+tokenizer = Tokenizer(num_words=10000)
+# Normally you'd need to load the tokenizer's state that was used during training.
+# Here, we'll fit it again on the training data for simplicity, but it may not be the exact same.
+sentences = [" ".join(movie_reviews.words(fileid)) for fileid in movie_reviews.fileids()]
+tokenizer.fit_on_texts(sentences)
+
+# Function to preprocess user input
+def preprocess_input(user_input):
+    sequence = tokenizer.texts_to_sequences([user_input])
+    padded_sequence = pad_sequences(sequence, maxlen=100)
+    return padded_sequence
+
+# Function to generate a response from the model
+def generate_response(user_input):
+    # Preprocess the input
+    preprocessed_input = preprocess_input(user_input)
+    
+    # Set the tensor to point to the input data
+    interpreter.set_tensor(input_details[0]['index'], preprocessed_input)
+    
+    # Run the inference
+    interpreter.invoke()
+    
+    # Get the output
+    output_data = interpreter.get_tensor(output_details[0]['index'])
+    
+    # Postprocess the output
+    response = "Positive" if output_data[0] > 0.5 else "Negative"
+    return response
+
+# Example usage
+user_input = "I love this movie!"
+response = generate_response(user_input)
+print(f"User input: {user_input}")
+print(f"Model response: {response}")
+Detailed Steps
+Load the TFLite Model:
+
+Use tf.lite.Interpreter to load the model.
+Allocate tensors for the model to prepare for inference.
+Preprocess User Input:
+
+Tokenize the user input text using the same tokenizer used during training.
+Convert the text to sequences and pad them to the same length as the training data.
+Run the Inference:
+
+Set the preprocessed input data into the interpreter.
+Invoke the interpreter to run inference.
+Postprocess the Output:
+
+Interpret the output tensor from the model.
+Generate a human-readable response based on the model's output.
+Notes
+Ensure that the tokenizer used during inference is the same as the one used during training. If you have saved the tokenizer state during training, load it instead of refitting it.
+The model's output in this example is a binary classification (positive/negative sentiment). Adjust the response generation logic based on your model's actual output format.
+This setup will allow you to input user text and get a response from the TFLite model running on a mobile or other low-resource device.
+```
 #### Integrate the TFLite Model in an Android App
 Ensure you have the TFLite model in your Android app's assets directory. Then, load and run the model in your Android app:
 
