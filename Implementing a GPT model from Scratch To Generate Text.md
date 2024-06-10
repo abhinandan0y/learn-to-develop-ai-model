@@ -1520,6 +1520,32 @@ Ep 10 (Step 000555): Train loss 0.135, Val loss 6.549
 Every effort moves you should not understand what is dear to these gunas, is said to be, and arrogance, austerities, and gifts. (1.47) Neither by the body is said: O Pāhmins or royal seers devoted to
 Ep 10 (Step 000495): Train loss 0.163, Val loss 6.585
 Every effort moves you shall reach the ultimate goal in the life. (37-47) Verses 1 to 47 He who performs the prescribed duty without depending on the fruits of work is a sannyasi and a yogi, and not he who has merely
+Ep 20 (Step 000995): Train loss 0.023, Val loss 7.316
+Every effort moves you are freed from longing for all enjoyments and moon; I am the syllable Om in all the Vedas, the sound in ether, the manliness in man. (7.8) And, I am the sweet fragrance in the earth
+Ep 30 (Step 001495): Train loss 0.054, Val loss 7.332
+Every effort moves you. (3.20) What-so-ever a great man does, that other men do; whatever he sets up as the standard, that the world follows. (3.21) There and that it be for me if the
+Ep 40 (Step 001995): Train loss 0.013, Val loss 7.558
+Every effort moves you are not understand what good could come by killing my own people in battle. (3.31) O Krishna! I do not desire victory or kingdom or pleasures. Of what avail are these kingdom, enjoyment, or even life itself to us.
+Ep 50 (Step 002495): Train loss 0.043, Val loss 7.770
+Every effort moves you do not understand what good could come by killing my own people in battle. (1.31) O Krishna! I do not desire victory or kingdom or pleasures. Of what avail are these kingdom, enjoyment, or even life itself to us.
+Ep 60 (Step 002995): Train loss 0.018, Val loss 7.900
+Every effort moves you are not understand what good could come by killing my own duty. (3.7) O Arjuna! Whenever there is a decline of righteousness and rise of evil, I manifest Myself. (3.7) For the protection
+Ep 70 (Step 003495): Train loss 0.029, Val loss 7.894
+Every effort moves you should not understand what good could come by killing my own people in battle. (1.31) O Arjuna! You can live on the learned, knowing which you shall cast off the bondage of the world. (1. (2
+Ep 75 (Step 003745): Train loss 0.020, Val loss 7.932
+Every effort moves you should not understand and he could come into any doubt know that Primal Being from whom has streamed forth this eternal activity,” and seek that Goal from which they who have reached it never return. (15.3-15.4) Free
+Ep 78 (Step 003895): Train loss 0.017, Val loss 7.892
+Every effort moves you shall be the ultimate goal in the life. (37-47) Verses 1 to 47 He who performs the prescribed duty without depending on the fruits of work is a sannyasi and a yogi, and not he who has merely
+Ep 80 (Step 003995): Train loss 0.021, Val loss 8.213
+Every effort moves you, I am I accept, the pious offering of the Lord in heart. (9.13) Whatever you do, whatever you eat, whatever you offer in the qualities in the form of, and whatever you practise in the form of auster
+Ep 85 (Step 004245): Train loss 0.051, Val loss 8.073
+Every effort moves you are to understand I Adhiyajña, or the gods, as one unconcerned. (9.9) Prakriti, under My guidance, gives birth to all things, moving and unmoving; and because of this,
+Ep 90 (Step 004495): Train loss 0.034, Val loss 8.077
+Every effort moves you has merely the objects of the form of Mine caused by desire and aversion, all beings are subject to illusion in the world. (7.27) But those men of good works whose sin has come to an end, worship Me steadfast in vows
+Ep 99 (Step 004945): Train loss 0.009, Val loss 8.471
+Every effort moves you has formed) The first part of the Vedas (Karma Kanda) deal with material things pertaining to the three Gunas. One should transcend the three Gunas, become free from the operation of the pairs of opposites, take refuge
+Ep 100 (Step 004995): Train loss 0.031, Val loss 8.404
+Every effort moves you has formed the organs of life, they rest.(5.19) The man of steady intellect, undeluded, knower of Brahman, established in Brahman, should not be elated having obtained the pleasant and should not be troubled
 ```
 #### Plotting loss
 ```
