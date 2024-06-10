@@ -1571,7 +1571,7 @@ epochs_tensor = torch.linspace(0, num_epochs, len(train_losses))
 plot_losses(epochs_tensor, tokens_seen, train_losses, val_losses)
 ```
 
-<img src="https://github.com/abhinandan0y/learn-to-develop-ai-model/tree/main/img/loss-plot.png" style="width: 100%;" alt="loss-plot">
+<img src="https://raw.githubusercontent.com/abhinandan0y/learn-to-develop-ai-model/main/img/loss-plot.png" style="width: 100%;" alt="loss-plot.png">
 
 #### 5.3.3 Modifying the text generation function
 The previous two subsections introduced temperature sampling and top-k sampling
