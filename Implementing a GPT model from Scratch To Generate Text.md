@@ -143,6 +143,7 @@ This stabilizes training and enables faster convergence to effective weights
 Layer normalization is applied both before and after the multi-head attention module within the transformer block, which we will implement later; it's also applied before the final output layer
 
 Let's see how layer normalization works by passing a small input sample through a simple neural network layer:
+```python
 torch.manual_seed(123)
 
 # create 2 training examples with 5 dimensions (features) each
@@ -151,24 +152,32 @@ batch_example = torch.randn(2, 5)
 layer = nn.Sequential(nn.Linear(5, 6), nn.ReLU())
 out = layer(batch_example)
 print(out)
+```
+```
 tensor([[0.2260, 0.3470, 0.0000, 0.2216, 0.0000, 0.0000],
         [0.2133, 0.2394, 0.0000, 0.5198, 0.3297, 0.0000]],
        grad_fn=<ReluBackward0>)
+```
 Let's compute the mean and variance for each of the 2 inputs above:
+```python
 mean = out.mean(dim=-1, keepdim=True)
 var = out.var(dim=-1, keepdim=True)
 
 print("Mean:\n", mean)
 print("Variance:\n", var)
+```
+```
 Mean:
  tensor([[0.1324],
         [0.2170]], grad_fn=<MeanBackward1>)
 Variance:
  tensor([[0.0231],
         [0.0398]], grad_fn=<VarBackward0>)
+```        
 The normalization is applied to each of the two inputs (rows) independently; using dim=-1 applies the calculation across the last dimension (in this case, the feature dimension) instead of the row dimension
 
 Subtracting the mean and dividing by the square-root of the variance (standard deviation) centers the inputs to have a mean of 0 and a variance of 1 across the column (feature) dimension:
+```python
 out_norm = (out - mean) / torch.sqrt(var)
 print("Normalized layer outputs:\n", out_norm)
 
@@ -176,6 +185,8 @@ mean = out_norm.mean(dim=-1, keepdim=True)
 var = out_norm.var(dim=-1, keepdim=True)
 print("Mean:\n", mean)
 print("Variance:\n", var)
+```
+```
 Normalized layer outputs:
  tensor([[ 0.6159,  1.4126, -0.8719,  0.5872, -0.8719, -0.8719],
         [-0.0189,  0.1121, -1.0876,  1.5173,  0.5647, -1.0876]],
@@ -186,18 +197,23 @@ Mean:
 Variance:
  tensor([[1.0000],
         [1.0000]], grad_fn=<VarBackward0>)
+```
 Each input is centered at 0 and has a unit variance of 1; to improve readability, we can disable PyTorch's scientific notation:
+```python
 torch.set_printoptions(sci_mode=False)
 print("Mean:\n", mean)
 print("Variance:\n", var)
+```
 Mean:
  tensor([[    -0.0000],
         [     0.0000]], grad_fn=<MeanBackward1>)
 Variance:
  tensor([[1.0000],
         [1.0000]], grad_fn=<VarBackward0>)
+```
 Above, we normalized the features of each input
 Now, using the same idea, we can implement a LayerNorm class:
+```python
 class LayerNorm(nn.Module):
     def __init__(self, emb_dim):
         super().__init__()
@@ -210,6 +226,7 @@ class LayerNorm(nn.Module):
         var = x.var(dim=-1, keepdim=True, unbiased=False)
         norm_x = (x - mean) / torch.sqrt(var + self.eps)
         return self.scale * norm_x + self.shift
+```
 Scale and shift
 
 Note that in addition to performing the normalization by subtracting the mean and dividing by the variance, we added two trainable parameters, a scale and a shift parameter
@@ -227,21 +244,25 @@ For LLMs, where the embedding dimension n is very large, the difference between 
 However, GPT-2 was trained with a biased variance in the normalization layers, which is why we also adopted this setting for compatibility reasons with the pretrained weights that we will load in later chapters
 
 Let's now try out LayerNorm in practice:
-
+```python
 ln = LayerNorm(emb_dim=5)
 out_ln = ln(batch_example)
+```
+```python
 mean = out_ln.mean(dim=-1, keepdim=True)
 var = out_ln.var(dim=-1, unbiased=False, keepdim=True)
 
 print("Mean:\n", mean)
 print("Variance:\n", var)
+```
+```
 Mean:
  tensor([[    -0.0000],
         [     0.0000]], grad_fn=<MeanBackward1>)
 Variance:
  tensor([[1.0000],
         [1.0000]], grad_fn=<VarBackward0>)
-
+```
 #### 4.3 Implementing a feed forward network with GELU activations
 In this section, we implement a small neural network submodule that is used as part of the transformer block in LLMs
 We start with the activation function
@@ -252,6 +273,7 @@ GELU (Hendrycks and Gimpel 2016) can be implemented in several ways; the exact v
 In practice, it's common to implement a computationally cheaper approximation: 
  
  (the original GPT-2 model was also trained with this approximation)
+```python
 class GELU(nn.Module):
     def __init__(self):
         super().__init__()
@@ -261,6 +283,8 @@ class GELU(nn.Module):
             torch.sqrt(torch.tensor(2.0 / torch.pi)) * 
             (x + 0.044715 * torch.pow(x, 3))
         ))
+```
+```python
 import matplotlib.pyplot as plt
 
 gelu, relu = GELU(), nn.ReLU()
@@ -280,13 +304,13 @@ for i, (y, label) in enumerate(zip([y_gelu, y_relu], ["GELU", "ReLU"]), 1):
 
 plt.tight_layout()
 plt.show()
-
+```
 As we can see, ReLU is a piecewise linear function that outputs the input directly if it is positive; otherwise, it outputs zero
 
 GELU is a smooth, non-linear function that approximates ReLU but with a non-zero gradient for negative values
 
 Next, let's implement the small neural network module, FeedForward, that we will be using in the LLM's transformer block later:
-
+```python
 class FeedForward(nn.Module):
     def __init__(self, cfg):
         super().__init__()
@@ -295,12 +319,13 @@ class FeedForward(nn.Module):
             GELU(),
             nn.Linear(4 * cfg["emb_dim"], cfg["emb_dim"]),
         )
-
     def forward(self, x):
         return self.layers(x)
 print(GPT_CONFIG_124M["emb_dim"])
-768
+```
 
+768
+```python
 ffn = FeedForward(GPT_CONFIG_124M)
 
 # input shape: [batch_size, num_token, emb_size]
@@ -308,7 +333,7 @@ x = torch.rand(2, 3, 768)
 out = ffn(x)
 print(out.shape)
 torch.Size([2, 3, 768])
-
+```
 
 #### 4.4 Adding shortcut connections
 Next, let's talk about the concept behind shortcut connections, also called skip or residual connections
@@ -318,6 +343,7 @@ This is achieved by adding the output of one layer to the output of a later laye
 Let's illustrate this idea with a small example network:
 
 In code, it looks like this:
+```python
 class ExampleDeepNeuralNetwork(nn.Module):
     def __init__(self, layer_sizes, use_shortcut):
         super().__init__()
@@ -329,7 +355,6 @@ class ExampleDeepNeuralNetwork(nn.Module):
             nn.Sequential(nn.Linear(layer_sizes[3], layer_sizes[4]), GELU()),
             nn.Sequential(nn.Linear(layer_sizes[4], layer_sizes[5]), GELU())
         ])
-
     def forward(self, x):
         for layer in self.layers:
             # Compute the output of the current layer
@@ -346,20 +371,20 @@ def print_gradients(model, x):
     # Forward pass
     output = model(x)
     target = torch.tensor([[0.]])
-
     # Calculate loss based on how close the target
     # and output are
     loss = nn.MSELoss()
-    loss = loss(output, target)
-    
+    loss = loss(output, target)    
     # Backward pass to calculate the gradients
     loss.backward()
-
     for name, param in model.named_parameters():
         if 'weight' in name:
             # Print the mean absolute gradient of the weights
             print(f"{name} has gradient mean of {param.grad.abs().mean().item()}")
+```
+
 Let's print the gradient values first without shortcut connections:
+```python
 layer_sizes = [3, 3, 3, 3, 3, 1]  
 
 sample_input = torch.tensor([[1., 0., -1.]])
@@ -369,30 +394,120 @@ model_without_shortcut = ExampleDeepNeuralNetwork(
     layer_sizes, use_shortcut=False
 )
 print_gradients(model_without_shortcut, sample_input)
+```
+```
 layers.0.0.weight has gradient mean of 0.00020173587836325169
 layers.1.0.weight has gradient mean of 0.00012011159560643137
 layers.2.0.weight has gradient mean of 0.0007152039906941354
 layers.3.0.weight has gradient mean of 0.0013988736318424344
 layers.4.0.weight has gradient mean of 0.005049645435065031
+```
 Next, let's print the gradient values with shortcut connections:
+```python
 torch.manual_seed(123)
 model_with_shortcut = ExampleDeepNeuralNetwork(
     layer_sizes, use_shortcut=True
 )
+```
+```
 print_gradients(model_with_shortcut, sample_input)
 layers.0.0.weight has gradient mean of 0.22169792652130127
 layers.1.0.weight has gradient mean of 0.20694106817245483
 layers.2.0.weight has gradient mean of 0.32896995544433594
 layers.3.0.weight has gradient mean of 0.2665732204914093
 layers.4.0.weight has gradient mean of 1.3258540630340576
+```
 As we can see based on the output above, shortcut connections prevent the gradients from vanishing in the early layers (towards layer.0)
 We will use this concept of a shortcut connection next when we implement a transformer block
 #### 4.5 Connecting attention and linear layers in a transformer block
 In this section, we now combine the previous concepts into a so-called transformer block
 A transformer block combines the causal multi-head attention module from the previous chapter with the linear layers, the feed forward neural network we implemented in an earlier section
 In addition, the transformer block also uses dropout and shortcut connections
-from previous_chapters import MultiHeadAttention
+```python
+#from previous_chapters import **MultiHeadAttention**
+```
+```python
+**MultiHeadAttention** method
+import tiktoken
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 
+
+class GPTDatasetV1(Dataset):
+    def __init__(self, txt, tokenizer, max_length, stride):
+        self.input_ids = []
+        self.target_ids = []
+        # Tokenize the entire text
+        token_ids = tokenizer.encode(txt, allowed_special={"<|endoftext|>"})
+        # Use a sliding window to chunk the book into overlapping sequences of max_length
+        for i in range(0, len(token_ids) - max_length, stride):
+            input_chunk = token_ids[i:i + max_length]
+            target_chunk = token_ids[i + 1: i + max_length + 1]
+            self.input_ids.append(torch.tensor(input_chunk))
+            self.target_ids.append(torch.tensor(target_chunk))
+    def __len__(self):
+        return len(self.input_ids)
+    def __getitem__(self, idx):
+        return self.input_ids[idx], self.target_ids[idx]
+
+
+def create_dataloader_v1(txt, batch_size=4, max_length=256,
+                         stride=128, shuffle=True, drop_last=True, num_workers=0):
+    # Initialize the tokenizer
+    tokenizer = tiktoken.get_encoding("gpt2")
+    # Create dataset
+    dataset = GPTDatasetV1(txt, tokenizer, max_length, stride)
+    # Create dataloader
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last, num_workers=0)
+    return dataloader
+
+
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+        super().__init__()
+        assert d_out % num_heads == 0, "d_out must be divisible by num_heads"
+        self.d_out = d_out
+        self.num_heads = num_heads
+        self.head_dim = d_out // num_heads  # Reduce the projection dim to match desired output dim
+        self.W_query = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.W_key = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.W_value = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.out_proj = nn.Linear(d_out, d_out)  # Linear layer to combine head outputs
+        self.dropout = nn.Dropout(dropout)
+        self.register_buffer('mask', torch.triu(torch.ones(context_length, context_length), diagonal=1))
+    def forward(self, x):
+        b, num_tokens, d_in = x.shape
+        keys = self.W_key(x)  # Shape: (b, num_tokens, d_out)
+        queries = self.W_query(x)
+        values = self.W_value(x)
+        # We implicitly split the matrix by adding a `num_heads` dimension
+        # Unroll last dim: (b, num_tokens, d_out) -> (b, num_tokens, num_heads, head_dim)
+        keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)
+        values = values.view(b, num_tokens, self.num_heads, self.head_dim)
+        queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)
+        # Transpose: (b, num_tokens, num_heads, head_dim) -> (b, num_heads, num_tokens, head_dim)
+        keys = keys.transpose(1, 2)
+        queries = queries.transpose(1, 2)
+        values = values.transpose(1, 2)
+        # Compute scaled dot-product attention (aka self-attention) with a causal mask
+        attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head
+        # Original mask truncated to the number of tokens and converted to boolean
+        mask_bool = self.mask.bool()[:num_tokens, :num_tokens]
+        # Use the mask to fill attention scores
+        attn_scores.masked_fill_(mask_bool, -torch.inf)
+        attn_weights = torch.softmax(attn_scores / keys.shape[-1]**0.5, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+        # Shape: (b, num_tokens, num_heads, head_dim)
+        context_vec = (attn_weights @ values).transpose(1, 2)
+        # Combine heads, where self.d_out = self.num_heads * self.head_dim
+        context_vec = context_vec.contiguous().view(b, num_tokens, self.d_out)
+        context_vec = self.out_proj(context_vec)  # optional projection
+        return context_vec
+```
+```python
+#from previous_chapters import **MultiHeadAttention**
 
 class TransformerBlock(nn.Module):
     def __init__(self, cfg):
@@ -408,7 +523,6 @@ class TransformerBlock(nn.Module):
         self.norm1 = LayerNorm(cfg["emb_dim"])
         self.norm2 = LayerNorm(cfg["emb_dim"])
         self.drop_shortcut = nn.Dropout(cfg["drop_rate"])
-
     def forward(self, x):
         # Shortcut connection for attention block
         shortcut = x
@@ -416,18 +530,17 @@ class TransformerBlock(nn.Module):
         x = self.att(x)  # Shape [batch_size, num_tokens, emb_size]
         x = self.drop_shortcut(x)
         x = x + shortcut  # Add the original input back
-
         # Shortcut connection for feed forward block
         shortcut = x
         x = self.norm2(x)
         x = self.ff(x)
         x = self.drop_shortcut(x)
         x = x + shortcut  # Add the original input back
-
         return x
-
+```
 Suppose we have 2 input samples with 6 tokens each, where each token is a 768-dimensional embedding vector; then this transformer block applies self-attention, followed by linear layers, to produce an output of similar size
 You can think of the output as an augmented version of the context vectors we discussed in the previous chapter
+```python
 torch.manual_seed(123)
 
 x = torch.rand(2, 4, 768)  # Shape: [batch_size, num_tokens, emb_dim]
@@ -436,14 +549,17 @@ output = block(x)
 
 print("Input shape:", x.shape)
 print("Output shape:", output.shape)
+```
+```
 Input shape: torch.Size([2, 4, 768])
 Output shape: torch.Size([2, 4, 768])
-
+```
 #### 4.6 Coding the GPT model
 We are almost there: now let's plug in the transformer block into the architecture we coded at the very beginning of this chapter so that we obtain a useable GPT architecture
 Note that the transformer block is repeated multiple times; in the case of the smallest 124M GPT-2 model, we repeat it 12 times:
 
 The corresponding code implementation, where cfg["n_layers"] = 12:
+```python
 class GPTModel(nn.Module):
     def __init__(self, cfg):
         super().__init__()
@@ -458,7 +574,6 @@ class GPTModel(nn.Module):
         self.out_head = nn.Linear(
             cfg["emb_dim"], cfg["vocab_size"], bias=False
         )
-
     def forward(self, in_idx):
         batch_size, seq_len = in_idx.shape
         tok_embeds = self.tok_emb(in_idx)
@@ -469,7 +584,10 @@ class GPTModel(nn.Module):
         x = self.final_norm(x)
         logits = self.out_head(x)
         return logits
+
+```
 Using the configuration of the 124M parameter model, we can now instantiate this GPT model with random initial weights as follows:
+```
 torch.manual_seed(123)
 model = GPTModel(GPT_CONFIG_124M)
 
@@ -477,6 +595,8 @@ out = model(batch)
 print("Input batch:\n", batch)
 print("\nOutput shape:", out.shape)
 print(out)
+```
+```
 Input batch:
  tensor([[6109, 3626, 6100,  345],
         [6109, 1110, 6622,  257]])
@@ -492,8 +612,10 @@ tensor([[[ 0.3613,  0.4222, -0.0711,  ...,  0.3483,  0.4661, -0.2838],
          [ 1.0558,  1.0318, -0.2800,  ...,  0.6936,  0.3205, -0.3178],
          [-0.1565,  0.3926,  0.3288,  ...,  1.2630, -0.1858,  0.0388]]],
        grad_fn=<UnsafeViewBackward0>)
-We will train this model in the next chapter
-However, a quick note about its size: we previously referred to it as a 124M parameter model; we can double check this number as follows:
+```
+
+#### Now We will train this model :
+```However, a quick note about its size: we previously referred to it as a 124M parameter model; we can double check this number as follows:
 total_params = sum(p.numel() for p in model.parameters())
 print(f"Total number of parameters: {total_params:,}")
 Total number of parameters: 163,009,536
@@ -523,91 +645,525 @@ total_size_mb = total_size_bytes / (1024 * 1024)
 
 print(f"Total size of the model: {total_size_mb:.2f} MB")
 Total size of the model: 621.83 MB
-Exercise: you can try the following other configurations, which are referenced in the GPT-2 paper, as well.
+```
+#### Now We will train this model :
+#Pretraining on Unlabeled Data
+```python
 
-GPT2-small (the 124M configuration we already implemented):
+from importlib.metadata import version
 
-"emb_dim" = 768
-"n_layers" = 12
-"n_heads" = 12
-GPT2-medium:
+pkgs = ["matplotlib", 
+        "numpy", 
+        "tiktoken", 
+        "torch",
+        "tensorflow" # For OpenAI's pretrained weights
+       ]
+for p in pkgs:
+    print(f"{p} version: {version(p)}")
 
-"emb_dim" = 1024
-"n_layers" = 24
-"n_heads" = 16
-GPT2-large:
+```
+```
+matplotlib version: 3.9.0
+numpy version: 1.25.2
+tiktoken version: 0.5.1
+torch version: 2.2.2
+tensorflow version: 2.15.0
+```
+In this chapter, we implement the training loop and code for basic model evaluation to pretrain an LLM
+At the end of this chapter, we also load openly available pretrained weights from OpenAI into our model
+#### 5.1 Evaluating generative text models
+We start this section with a brief recap of initializing a GPT model using the code from the previous chapter
+Then, we discuss basic evaluation metrics for LLMs
+Lastly, in this section, we apply these evaluation metrics to a training and validation dataset
+5.1.1 Using GPT to generate text
+We initialize a GPT model using the code from the previous chapter
+```python
+import torch
+#from previous_chapters import GPTModel
+```
+**GPTModel**
+```python
+import tiktoken
+import torch
+import torch.nn as nn
+from torch.utils.data import Dataset, DataLoader
 
-"emb_dim" = 1280
-"n_layers" = 36
-"n_heads" = 20
-GPT2-XL:
+#####################################
+# Chapter 2
+#####################################
 
-"emb_dim" = 1600
-"n_layers" = 48
-"n_heads" = 25
-#### 4.7 Generating text
-LLMs like the GPT model we implemented above are used to generate one word at a time
 
-The following generate_text_simple function implements greedy decoding, which is a simple and fast method to generate text
-In greedy decoding, at each step, the model chooses the word (or token) with the highest probability as its next output (the highest logit corresponds to the highest probability, so we technically wouldn't even have to compute the softmax function explicitly)
-In the next chapter, we will implement a more advanced generate_text function
-The figure below depicts how the GPT model, given an input context, generates the next word token
+class GPTDatasetV1(Dataset):
+    def __init__(self, txt, tokenizer, max_length, stride, num_workers=0):
+        self.input_ids = []
+        self.target_ids = []
+        # Tokenize the entire text
+        token_ids = tokenizer.encode(txt, allowed_special={"<|endoftext|>"})
+        # Use a sliding window to chunk the book into overlapping sequences of max_length
+        for i in range(0, len(token_ids) - max_length, stride):
+            input_chunk = token_ids[i:i + max_length]
+            target_chunk = token_ids[i + 1: i + max_length + 1]
+            self.input_ids.append(torch.tensor(input_chunk))
+            self.target_ids.append(torch.tensor(target_chunk))
+    def __len__(self):
+        return len(self.input_ids)
+    def __getitem__(self, idx):
+        return self.input_ids[idx], self.target_ids[idx]
+
+
+def create_dataloader_v1(txt, batch_size=4, max_length=256,
+                         stride=128, shuffle=True, drop_last=True, num_workers=0):
+    # Initialize the tokenizer
+    tokenizer = tiktoken.get_encoding("gpt2")
+    # Create dataset
+    dataset = GPTDatasetV1(txt, tokenizer, max_length, stride)
+    # Create dataloader
+    dataloader = DataLoader(
+        dataset, batch_size=batch_size, shuffle=shuffle, drop_last=drop_last)
+    return dataloader
+
+
+#####################################
+# Chapter 3
+#####################################
+class MultiHeadAttention(nn.Module):
+    def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+        super().__init__()
+        assert d_out % num_heads == 0, "d_out must be divisible by num_heads"
+        self.d_out = d_out
+        self.num_heads = num_heads
+        self.head_dim = d_out // num_heads  # Reduce the projection dim to match desired output dim
+        self.W_query = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.W_key = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.W_value = nn.Linear(d_in, d_out, bias=qkv_bias)
+        self.out_proj = nn.Linear(d_out, d_out)  # Linear layer to combine head outputs
+        self.dropout = nn.Dropout(dropout)
+        self.register_buffer("mask", torch.triu(torch.ones(context_length, context_length), diagonal=1))
+    def forward(self, x):
+        b, num_tokens, d_in = x.shape
+        keys = self.W_key(x)  # Shape: (b, num_tokens, d_out)
+        queries = self.W_query(x)
+        values = self.W_value(x)
+        # We implicitly split the matrix by adding a `num_heads` dimension
+        # Unroll last dim: (b, num_tokens, d_out) -> (b, num_tokens, num_heads, head_dim)
+        keys = keys.view(b, num_tokens, self.num_heads, self.head_dim)
+        values = values.view(b, num_tokens, self.num_heads, self.head_dim)
+        queries = queries.view(b, num_tokens, self.num_heads, self.head_dim)
+        # Transpose: (b, num_tokens, num_heads, head_dim) -> (b, num_heads, num_tokens, head_dim)
+        keys = keys.transpose(1, 2)
+        queries = queries.transpose(1, 2)
+        values = values.transpose(1, 2)
+        # Compute scaled dot-product attention (aka self-attention) with a causal mask
+        attn_scores = queries @ keys.transpose(2, 3)  # Dot product for each head
+        # Original mask truncated to the number of tokens and converted to boolean
+        mask_bool = self.mask.bool()[:num_tokens, :num_tokens]
+        # Use the mask to fill attention scores
+        attn_scores.masked_fill_(mask_bool, -torch.inf)
+        attn_weights = torch.softmax(attn_scores / keys.shape[-1]**0.5, dim=-1)
+        attn_weights = self.dropout(attn_weights)
+        # Shape: (b, num_tokens, num_heads, head_dim)
+        context_vec = (attn_weights @ values).transpose(1, 2)
+        # Combine heads, where self.d_out = self.num_heads * self.head_dim
+        context_vec = context_vec.contiguous().view(b, num_tokens, self.d_out)
+        context_vec = self.out_proj(context_vec)  # optional projection
+        return context_vec
+
+
+#####################################
+# Chapter 4
+#####################################
+class LayerNorm(nn.Module):
+    def __init__(self, emb_dim):
+        super().__init__()
+        self.eps = 1e-5
+        self.scale = nn.Parameter(torch.ones(emb_dim))
+        self.shift = nn.Parameter(torch.zeros(emb_dim))
+    def forward(self, x):
+        mean = x.mean(dim=-1, keepdim=True)
+        var = x.var(dim=-1, keepdim=True, unbiased=False)
+        norm_x = (x - mean) / torch.sqrt(var + self.eps)
+        return self.scale * norm_x + self.shift
+
+
+class GELU(nn.Module):
+    def __init__(self):
+        super().__init__()
+    def forward(self, x):
+        return 0.5 * x * (1 + torch.tanh(
+            torch.sqrt(torch.tensor(2.0 / torch.pi)) *
+            (x + 0.044715 * torch.pow(x, 3))
+        ))
+
+
+class FeedForward(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.layers = nn.Sequential(
+            nn.Linear(cfg["emb_dim"], 4 * cfg["emb_dim"]),
+            GELU(),
+            nn.Linear(4 * cfg["emb_dim"], cfg["emb_dim"]),
+        )
+    def forward(self, x):
+        return self.layers(x)
+
+
+class TransformerBlock(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.att = MultiHeadAttention(
+            d_in=cfg["emb_dim"],
+            d_out=cfg["emb_dim"],
+            context_length=cfg["context_length"],
+            num_heads=cfg["n_heads"],
+            dropout=cfg["drop_rate"],
+            qkv_bias=cfg["qkv_bias"])
+        self.ff = FeedForward(cfg)
+        self.norm1 = LayerNorm(cfg["emb_dim"])
+        self.norm2 = LayerNorm(cfg["emb_dim"])
+        self.drop_shortcut = nn.Dropout(cfg["drop_rate"])
+    def forward(self, x):
+        # Shortcut connection for attention block
+        shortcut = x
+        x = self.norm1(x)
+        x = self.att(x)   # Shape [batch_size, num_tokens, emb_size]
+        x = self.drop_shortcut(x)
+        x = x + shortcut  # Add the original input back
+        # Shortcut connection for feed-forward block
+        shortcut = x
+        x = self.norm2(x)
+        x = self.ff(x)
+        x = self.drop_shortcut(x)
+        x = x + shortcut  # Add the original input back
+        return x
+
+
+class GPTModel(nn.Module):
+    def __init__(self, cfg):
+        super().__init__()
+        self.tok_emb = nn.Embedding(cfg["vocab_size"], cfg["emb_dim"])
+        self.pos_emb = nn.Embedding(cfg["context_length"], cfg["emb_dim"])
+        self.drop_emb = nn.Dropout(cfg["drop_rate"])
+        self.trf_blocks = nn.Sequential(
+            *[TransformerBlock(cfg) for _ in range(cfg["n_layers"])])
+        self.final_norm = LayerNorm(cfg["emb_dim"])
+        self.out_head = nn.Linear(cfg["emb_dim"], cfg["vocab_size"], bias=False)
+    def forward(self, in_idx):
+        batch_size, seq_len = in_idx.shape
+        tok_embeds = self.tok_emb(in_idx)
+        pos_embeds = self.pos_emb(torch.arange(seq_len, device=in_idx.device))
+        x = tok_embeds + pos_embeds  # Shape [batch_size, num_tokens, emb_size]
+        x = self.drop_emb(x)
+        x = self.trf_blocks(x)
+        x = self.final_norm(x)
+        logits = self.out_head(x)
+        return logits
+
 
 def generate_text_simple(model, idx, max_new_tokens, context_size):
-    # idx is (batch, n_tokens) array of indices in the current context
+    # idx is (B, T) array of indices in the current context
     for _ in range(max_new_tokens):
-        
         # Crop current context if it exceeds the supported context size
         # E.g., if LLM supports only 5 tokens, and the context size is 10
         # then only the last 5 tokens are used as context
         idx_cond = idx[:, -context_size:]
-        
         # Get the predictions
         with torch.no_grad():
             logits = model(idx_cond)
-        
         # Focus only on the last time step
-        # (batch, n_tokens, vocab_size) becomes (batch, vocab_size)
-        logits = logits[:, -1, :]  
-
-        # Apply softmax to get probabilities
-        probas = torch.softmax(logits, dim=-1)  # (batch, vocab_size)
-
-        # Get the idx of the vocab entry with the highest probability value
-        idx_next = torch.argmax(probas, dim=-1, keepdim=True)  # (batch, 1)
-
+        # (batch, n_token, vocab_size) becomes (batch, vocab_size)
+        logits = logits[:, -1, :]
+        # Get the idx of the vocab entry with the highest logits value
+        idx_next = torch.argmax(logits, dim=-1, keepdim=True)  # (batch, 1)
         # Append sampled index to the running sequence
         idx = torch.cat((idx, idx_next), dim=1)  # (batch, n_tokens+1)
-
     return idx
-The generate_text_simple above implements an iterative process, where it creates one token at a time
 
-Let's prepare an input example:
-start_context = "Hello, I am"
 
-encoded = tokenizer.encode(start_context)
-print("encoded:", encoded)
+def main():
+    GPT_CONFIG_124M = {
+        "vocab_size": 50257,     # Vocabulary size
+        "context_length": 1024,  # Context length
+        "emb_dim": 768,          # Embedding dimension
+        "n_heads": 12,           # Number of attention heads
+        "n_layers": 12,          # Number of layers
+        "drop_rate": 0.1,        # Dropout rate
+        "qkv_bias": False        # Query-Key-Value bias
+    }
+    torch.manual_seed(123)
+    model = GPTModel(GPT_CONFIG_124M)
+    model.eval()  # disable dropout
+    start_context = "Hello, I am"
+    tokenizer = tiktoken.get_encoding("gpt2")
+    encoded = tokenizer.encode(start_context)
+    encoded_tensor = torch.tensor(encoded).unsqueeze(0)
+    print(f"\n{50*'='}\n{22*' '}IN\n{50*'='}")
+    print("\nInput text:", start_context)
+    print("Encoded input text:", encoded)
+    print("encoded_tensor.shape:", encoded_tensor.shape)
+    out = generate_text_simple(
+        model=model,
+        idx=encoded_tensor,
+        max_new_tokens=10,
+        context_size=GPT_CONFIG_124M["context_length"]
+    )
+    decoded_text = tokenizer.decode(out.squeeze(0).tolist())
+    print(f"\n\n{50*'='}\n{22*' '}OUT\n{50*'='}")
+    print("\nOutput:", out)
+    print("Output length:", len(out[0]))
+    print("Output text:", decoded_text)
 
-encoded_tensor = torch.tensor(encoded).unsqueeze(0)
-print("encoded_tensor.shape:", encoded_tensor.shape)
-encoded: [15496, 11, 314, 716]
-encoded_tensor.shape: torch.Size([1, 4])
-model.eval() # disable dropout
 
-out = generate_text_simple(
+if __name__ == "__main__":
+    main()
+```
+```
+import torch
+#from previous_chapters import GPTModel
+
+GPT_CONFIG_124M = {
+    "vocab_size": 50257,   # Vocabulary size
+    "context_length": 256, # Shortened context length (orig: 1024)
+    "emb_dim": 768,        # Embedding dimension
+    "n_heads": 12,         # Number of attention heads
+    "n_layers": 12,        # Number of layers
+    "drop_rate": 0.1,      # Dropout rate
+    "qkv_bias": False      # Query-key-value bias
+}
+
+torch.manual_seed(123)
+model = GPTModel(GPT_CONFIG_124M)
+model.eval();  # Disable dropout during inference
+```
+We use dropout of 0.1 above, but it's relatively common to train LLMs without dropout nowadays
+
+Modern LLMs also don't use bias vectors in the nn.Linear layers for the query, key, and value matrices (unlike earlier GPT models), which is achieved by setting "qkv_bias": False
+We reduce the context length (context_length) of only 256 tokens to reduce the computational resource requirements for training the model, whereas the original 124 million parameter GPT-2 model used 1024 tokens
+This is so that more readers will be able to follow and execute the code examples on their laptop computer
+However, please feel free to increase the context_length to 1024 tokens (this would not require any code changes)
+We will also load a model with a 1024 context_length later from pretrained weights
+Next, we use the generate_text_simple function from the previous chapter to generate text
+In addition, we define two convenience functions, text_to_token_ids and token_ids_to_text, for converting between token and text representations that we use throughout this chapter
+
+```python
+import tiktoken
+from previous_chapters import generate_text_simple
+
+def text_to_token_ids(text, tokenizer):
+    encoded = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
+    encoded_tensor = torch.tensor(encoded).unsqueeze(0) # add batch dimension
+    return encoded_tensor
+
+def token_ids_to_text(token_ids, tokenizer):
+    flat = token_ids.squeeze(0) # remove batch dimension
+    return tokenizer.decode(flat.tolist())
+
+start_context = "Every effort moves you"
+tokenizer = tiktoken.get_encoding("gpt2")
+
+token_ids = generate_text_simple(
     model=model,
-    idx=encoded_tensor, 
-    max_new_tokens=6, 
+    idx=text_to_token_ids(start_context, tokenizer),
+    max_new_tokens=10,
     context_size=GPT_CONFIG_124M["context_length"]
 )
 
-print("Output:", out)
-print("Output length:", len(out[0]))
-Output: tensor([[15496,    11,   314,   716, 27018, 24086, 47843, 30961, 42348,  7267]])
-Output length: 10
-Remove batch dimension and convert back into text:
-decoded_text = tokenizer.decode(out.squeeze(0).tolist())
-print(decoded_text)
-Hello, I am Featureiman Byeswickattribute argue
-Note that the model is untrained; hence the random output texts above
-We will train the model in the next chapter
+print("Output text:\n", token_ids_to_text(token_ids, tokenizer))
+```
+```
+Output text:
+ Every effort moves you rentingetic wasnم refres RexMeCHicular stren
+```
+As we can see above, the model does not produce good text because it has not been trained yet
+How do we measure or capture what "good text" is, in a numeric form, to track it during training?
+The next subsection introduces metrics to calculate a loss metric for the generated outputs that we can use to measure the training progress
+The next chapters on finetuning LLMs will also introduce additional ways to **measure model quality
+**
+#### 5.1.2 Calculating the text generation loss: cross entropy, and perplexity
+Suppose we have an inputs tensor containing the token IDs for 2 training examples (rows)
+Corresponding to the inputs, the targets contain the desired token IDs that we want the model to generate
+Notice that the targets are the inputs shifted by 1 position, as explained in chapter 2 when we implemented the data loader
+```python
+inputs = torch.tensor([[16833, 3626, 6100],   # ["every effort moves",
+                       [40,    1107, 588]])   #  "I really like"]
+
+targets = torch.tensor([[3626, 6100, 345  ],  # [" effort moves you",
+                        [1107,  588, 11311]]) #  " really like chocolate"]
+```
+Feeding the inputs to the model, we obtain the logits vector for the 2 input examples that consist of 3 tokens each
+Each of the tokens is a 50,257-dimensional vector corresponding to the size of the vocabulary
+Applying the softmax function, we can turn the logits tensor into a tensor of the same dimension containing probability scores
+```python
+with torch.no_grad():
+    logits = model(inputs)
+
+probas = torch.softmax(logits, dim=-1) # Probability of each token in vocabulary
+print(probas.shape) # Shape: (batch_size, num_tokens, vocab_size)
+```
+```
+torch.Size([2, 3, 50257])
+```
+The figure below, using a very small vocabulary for illustration purposes, outlines how we convert the probability scores back into text, which we discussed at the end of the previous chapter
+
+As discussed in the previous chapter, we can apply the argmax function to convert the probability scores into predicted token IDs
+The softmax function above produced a 50,257-dimensional vector for each token; the argmax function returns the position of the highest probability score in this vector, which is the predicted token ID for the given token
+Since we have 2 input batches with 3 tokens each, we obtain 2 by 3 predicted token IDs:
+```python
+token_ids = torch.argmax(probas, dim=-1, keepdim=True)
+print("Token IDs:\n", token_ids)
+```
+Token IDs:
+ tensor([[[16657],
+         [  339],
+         [42826]],
+
+        [[49906],
+         [29669],
+         [41751]]])
+```
+```python
+token_ids = torch.argmax(probas, dim=-1, keepdim=True)
+print("Token IDs:\n", token_ids)
+```
+Token IDs:
+ tensor([[[16657],
+         [  339],
+         [42826]],
+
+        [[49906],
+         [29669],
+         [41751]]])
+```
+If we decode these tokens, we find that these are quite different from the tokens we want the model to predict, namely the target tokens:
+```python
+print(f"Targets batch 1: {token_ids_to_text(targets[0], tokenizer)}")
+print(f"Outputs batch 1: {token_ids_to_text(token_ids[0].flatten(), tokenizer)}")
+```
+```
+Targets batch 1:  effort moves you
+Outputs batch 1:  Armed heNetflix
+```
+That's because the model wasn't trained yet
+To train the model, we need to know how far it is away from the correct predictions (targets)
+
+The token probabilities corresponding to the target indices are as follows:
+```python
+text_idx = 0
+target_probas_1 = probas[text_idx, [0, 1, 2], targets[text_idx]]
+print("Text 1:", target_probas_1)
+
+text_idx = 1
+target_probas_2 = probas[text_idx, [0, 1, 2], targets[text_idx]]
+print("Text 2:", target_probas_2)
+```
+```
+Text 1: tensor([7.4541e-05, 3.1061e-05, 1.1563e-05])
+Text 2: tensor([1.0337e-05, 5.6776e-05, 4.7559e-06])
+```
+We want to maximize all these values, bringing them close to a probability of 1
+In mathematical optimization, it is easier to maximize the logarithm of the probability score than the probability score itself; this is out of the scope of this book, but I have recorded a lecture with more details here: L8.2 Logistic Regression Loss Function
+# Compute logarithm of all token probabilities
+```python
+log_probas = torch.log(torch.cat((target_probas_1, target_probas_2)))
+print(log_probas)
+```
+```
+tensor([ -9.5042, -10.3796, -11.3677, -11.4798,  -9.7764, -12.2561])
+```
+Next, we compute the average log probability:
+# Calculate the average probability for each token
+```python
+avg_log_probas = torch.mean(log_probas)
+print(avg_log_probas)
+```
+```
+tensor(-10.7940)
+```
+The goal is to make this average log probability as large as possible by optimizing the model weights
+Due to the log, the largest possible value is 0, and we are currently far away from 0
+In **deep learning**, instead of maximizing the average log-probability, it's a standard convention to minimize the negative average log-probability value; in our case, instead of maximizing -10.7722 so that it approaches 0, in deep learning, we would minimize 10.7722 so that it approaches 0
+The value negative of -10.7722, i.e., 10.7722, is also called cross entropy loss in deep learning
+```python
+neg_avg_log_probas = avg_log_probas * -1
+print(neg_avg_log_probas)
+```
+```
+tensor(10.7940)
+```
+PyTorch already implements a cross_entropy function that carries out the previous steps
+
+Before we apply the cross entropy function, let's check the shape of the logits and targets
+```python
+# Logits have shape (batch_size, num_tokens, vocab_size)
+print("Logits shape:", logits.shape)
+```
+# Targets have shape (batch_size, num_tokens)
+print("Targets shape:", targets.shape)
+```
+```
+Logits shape: torch.Size([2, 3, 50257])
+Targets shape: torch.Size([2, 3])
+```
+For the cross entropy_loss function in PyTorch, we want to flatten these tensors by combining them over the batch dimension:
+```python
+logits_flat = logits.flatten(0, 1)
+targets_flat = targets.flatten()
+
+print("Flattened logits:", logits_flat.shape)
+print("Flattened targets:", targets_flat.shape)
+```
+```
+Flattened logits: torch.Size([6, 50257])
+Flattened targets: torch.Size([6])```
+
+Note that the targets are the token IDs, which also represent the index positions in the logits tensors that we want to maximize
+The cross_entropy function in PyTorch will automatically take care of applying the softmax and log-probability computation internally over those token indices in the logits that are to be maximized
+```python
+loss = torch.nn.functional.cross_entropy(logits_flat, targets_flat)
+print(loss)
+```
+tensor(10.7940)
+A concept related to the cross entropy loss is the perplexity of an LLM
+The perplexity is simply the exponential of the cross entropy loss
+```python
+perplexity = torch.exp(loss)
+print(perplexity)
+```
+tensor(48725.8203)
+
+The perplexity is often considered more interpretable because it can be understood as the effective vocabulary size that the model is uncertain about at each step (in the example above, that'd be 47,678 words or tokens)
+In other words, perplexity provides a measure of how well the probability distribution predicted by the model matches the actual distribution of the words in the dataset
+Similar to the loss, a lower perplexity indicates that the model predictions are closer to the actual distribution
+#### 5.1.3 Calculating the training and validation set losses
+We use a relatively small dataset for training the LLM (in fact, only one short story)
+
+The reasons are:
+
+You can run the code examples in a few minutes on a laptop computer without a suitable GPU
+The training finishes relatively fast (minutes instead of weeks), which is good for educational purposes
+We use a text from the public domain, which can be included in this GitHub repository without violating any usage rights or bloating the repository size
+For example, Llama 2 7B required 184,320 GPU hours on A100 GPUs to be trained on 2 trillion tokens
+
+At the time of this writing, the hourly cost of an 8xA100 cloud server at AWS is approximately $30
+So, via an off-the-envelope calculation, training this LLM would cost 184,320 / 8 * $30 = $690,000
+Below, we use the same dataset we used in chapter 2
+```python
+import os
+import urllib.request
+
+#file_path = "the-verdict.txt"
+#url = "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/main/ch02/01_main-chapter-code/the-verdict.txt"
+
+#if not os.path.exists(file_path):
+#    with urllib.request.urlopen(url) as response:
+#        text_data = response.read().decode('utf-8')
+#    with open(file_path, "w", encoding="utf-8") as file:
+#        file.write(text_data)
+#else:
+#    with open(file_path, "r", encoding="utf-8") as file:
+#        text_data = file.read()
+
+file_path = "train_on_geeta.txt"
+with open(file_path, "r", encoding="utf-8") as file:
+         text_data = file.read()
+
+```
