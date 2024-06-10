@@ -1628,6 +1628,22 @@ My Output text:
  Every effort moves you that you.20)
 But these creaturesHe who has no unable to
 
+
+################
+>>> token_ids = generate(
+...     model=model,
+...     idx=text_to_token_ids("Hi what is life", tokenizer),
+...     max_new_tokens=50,
+...     context_size=GPT_CONFIG_124M["context_length"],
+...     top_k=25,
+...     temperature=1.4
+... )
+
+>>> 
+>>> print("Output text:\n", token_ids_to_text(token_ids, tokenizer))
+Output text:
+ Hi what is life. (13.28)
+O Arjuna! Know desirema alone does Lord, does not rejoice and hate and also of men the kshetras? (13.9.42) does not hate when the three Gunas gathered
 ```
 #### 5.4 Loading and saving model weights in PyTorch
 
