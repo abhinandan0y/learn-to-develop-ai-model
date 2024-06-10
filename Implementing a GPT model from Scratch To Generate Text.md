@@ -1255,7 +1255,7 @@ print(input_embeddings.shape)
 #from previous_chapters import **create_dataloader_v1**
 
 # Train/validation ratio
-train_ratio = 0.90
+train_ratio = 0.80
 split_idx = int(train_ratio * len(text_data))
 train_data = text_data[:split_idx]
 val_data = text_data[split_idx:]
@@ -1390,6 +1390,12 @@ print("Validation loss:", val_loss)
 ```
 Training loss: 10.947873609406608
 Validation loss: 10.93969440460205
+
+>>> print("Training loss:", train_loss)
+Training loss: 0.19355179727077484
+>>> print("Validation loss:", val_loss)
+Validation loss: 5.09062534570694
+
 ```
 #### 5.2 Training an LLM
 In this section, we finally implement the code for training the LLM
@@ -1456,7 +1462,7 @@ model = GPTModel(GPT_CONFIG_124M)
 model.to(device)
 optimizer = torch.optim.AdamW(model.parameters(), lr=0.0004, weight_decay=0.1)
 
-num_epochs = 10
+num_epochs = 100
 train_losses, val_losses, tokens_seen = train_model_simple(
     model, train_loader, val_loader, optimizer, device,
     num_epochs=num_epochs, eval_freq=5, eval_iter=5,
@@ -1493,29 +1499,27 @@ Ep 1 (Step 000050): Train loss 5.349, Val loss 6.009
 Ep 1 (Step 000055): Train loss 5.197, Val loss 6.026
 Every effort moves you, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, the Lord, and the Lord, the Lord, the Lord,
 Ep 2 (Step 000060): Train loss 5.078, Val loss 5.939
-Ep 2 (Step 000065): Train loss 4.949, Val loss 5.893
-Ep 2 (Step 000070): Train loss 4.908, Val loss 5.826
-Ep 2 (Step 000075): Train loss 4.971, Val loss 5.831
-Ep 2 (Step 000080): Train loss 4.835, Val loss 5.876
-Ep 2 (Step 000085): Train loss 4.589, Val loss 5.751
-Ep 2 (Step 000090): Train loss 4.569, Val loss 5.700
-Ep 2 (Step 000095): Train loss 4.483, Val loss 5.712
-Ep 2 (Step 000100): Train loss 4.394, Val loss 5.669
-Ep 2 (Step 000105): Train loss 4.201, Val loss 5.635
 Ep 2 (Step 000110): Train loss 4.042, Val loss 5.673
 Every effort moves you to be the senses. (10. (14) Arjuna! (14) Arjuna! (4. (14) The Lord said: O Arjuna! (4) Arjuna! (6
 Ep 3 (Step 000115): Train loss 4.307, Val loss 5.554
-Ep 3 (Step 000120): Train loss 4.056, Val loss 5.639
-Ep 3 (Step 000125): Train loss 3.795, Val loss 5.614
-Ep 3 (Step 000130): Train loss 3.989, Val loss 5.626
-Ep 3 (Step 000135): Train loss 4.047, Val loss 5.618
-Ep 3 (Step 000140): Train loss 3.926, Val loss 5.566
-Ep 3 (Step 000145): Train loss 3.782, Val loss 5.538
-Ep 3 (Step 000150): Train loss 3.605, Val loss 5.541
-Ep 3 (Step 000155): Train loss 3.391, Val loss 5.489
-Ep 3 (Step 000160): Train loss 3.730, Val loss 5.504
 Ep 3 (Step 000165): Train loss 3.432, Val loss 5.500
 Every effort moves you to be known. (10. (10) The Lord said: O Arjuna! (1) The Lord said: O Arjuna! (1-1) The Lord said: O Krishna, the Lord said:
+Ep 4 (Step 000220): Train loss 2.607, Val loss 5.462
+Every effort moves you are not understand that is not be attained by the mind. (2.2) The man who has been the mind and who has been, who has no doubt, and who is not be the mind and who is not be the mind in
+Ep 5 (Step 000275): Train loss 2.048, Val loss 5.556
+Every effort moves you, and so, Ο Bhās own duty is called you have declared to me, Ο Bhārata, and all the Lord of the three Gunas, and without attachment, and without merit, and tamas. (2
+Ep 6 (Step 000335): Train loss 1.192, Val loss 5.781
+Every effort moves you to The wise know that I do not you should not able to fix the mind. (3.13) The Lord said: O Arjuna! Thee with Thy mouths opened wide and the mind is no duty, Ο Bhish
+Ep 7 (Step 000390): Train loss 0.713, Val loss 6.017
+Every effort moves you to do so, Ο Thou of infinite form. (11.6) Thou art Wind and Death and Fire and Moon and the Lord of Water. (11.11) Therefore-controlled and pain, Ο Supreme Purusha
+Ep 8 (Step 000445): Train loss 0.487, Val loss 6.236
+Every effort moves you cannot be an equal, even so do these creatures swiftly rush into Thy mouths to their own destruction. (11.13) Thou lickest Thy lips, devouring all the worlds on every side with Thy flaming mouths. Thy fiery rays fill
+Ep 9 (Step 000500): Train loss 0.198, Val loss 6.385
+Every effort moves you to reach the objects of pairs, and thence are the three kinds.  (7.1) Knowing which there shall not be any other to be known in this world, that Knowledge combined with experience, I will tell you should not deluded
+Ep 10 (Step 000555): Train loss 0.135, Val loss 6.549
+Every effort moves you should not understand what is dear to these gunas, is said to be, and arrogance, austerities, and gifts. (1.47) Neither by the body is said: O Pāhmins or royal seers devoted to
+Ep 10 (Step 000495): Train loss 0.163, Val loss 6.585
+Every effort moves you shall reach the ultimate goal in the life. (37-47) Verses 1 to 47 He who performs the prescribed duty without depending on the fruits of work is a sannyasi and a yogi, and not he who has merely
 ```
 #### Plotting loss
 ```
@@ -1540,3 +1544,90 @@ def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses):
 epochs_tensor = torch.linspace(0, num_epochs, len(train_losses))
 plot_losses(epochs_tensor, tokens_seen, train_losses, val_losses)
 ```
+
+#### 5.3.3 Modifying the text generation function
+The previous two subsections introduced temperature sampling and top-k sampling
+Let's use these two concepts to modify the generate_simple function we used to generate text via the LLM earlier, creating a new generate function:
+```python
+def generate(model, idx, max_new_tokens, context_size, temperature=0.0, top_k=None, eos_id=None):
+    # For-loop is the same as before: Get logits, and only focus on last time step
+    for _ in range(max_new_tokens):
+        idx_cond = idx[:, -context_size:]
+        with torch.no_grad():
+            logits = model(idx_cond)
+        logits = logits[:, -1, :]
+        # New: Filter logits with top_k sampling
+        if top_k is not None:
+            # Keep only top_k values
+            top_logits, _ = torch.topk(logits, top_k)
+            min_val = top_logits[:, -1]
+            logits = torch.where(logits < min_val, torch.tensor(float('-inf')).to(logits.device), logits)
+        # New: Apply temperature scaling
+        if temperature > 0.0:
+            logits = logits / temperature
+            # Apply softmax to get probabilities
+            probs = torch.softmax(logits, dim=-1)  # (batch_size, context_len)
+            # Sample from the distribution
+            idx_next = torch.multinomial(probs, num_samples=1)  # (batch_size, 1)
+        # Otherwise same as before: get idx of the vocab entry with the highest logits value
+        else:
+            idx_next = torch.argmax(logits, dim=-1, keepdim=True)  # (batch_size, 1)
+        if idx_next == eos_id:  # Stop generating early if end-of-sequence token is encountered and eos_id is specified
+            break
+        # Same as before: append sampled index to the running sequence
+        idx = torch.cat((idx, idx_next), dim=1)  # (batch_size, num_tokens+1)
+    return idx
+
+
+torch.manual_seed(123)
+
+token_ids = generate(
+    model=model,
+    idx=text_to_token_ids("Every effort moves you", tokenizer),
+    max_new_tokens=15,
+    context_size=GPT_CONFIG_124M["context_length"],
+    top_k=25,
+    temperature=1.4
+)
+
+print("Output text:\n", token_ids_to_text(token_ids, tokenizer))
+```
+```
+Output text:
+ Every effort moves you stand to work on surprise, a one of us had gone with random-
+
+My Output text:
+ Every effort moves you that you.20)
+But these creaturesHe who has no unable to
+
+```
+#### 5.4 Loading and saving model weights in PyTorch
+
+The recommended way in PyTorch is to save the model weights, the so-called state_dict via by applying the torch.save function to the .state_dict() method:
+```python
+torch.save(model.state_dict(), "model.pth")
+Then we can load the model weights into a new GPTModel model instance as follows:
+model = GPTModel(GPT_CONFIG_124M)
+model.load_state_dict(torch.load("model.pth"))
+model.eval();
+```
+It's common to train LLMs with adaptive optimizers like Adam or AdamW instead of regular SGD
+These adaptive optimizers store additional parameters for each model weight, so it makes sense to save them as well in case we plan to continue the pretraining later:
+```python
+torch.save({
+    "model_state_dict": model.state_dict(),
+    "optimizer_state_dict": optimizer.state_dict(),
+    }, 
+    "model_and_optimizer.pth"
+)
+checkpoint = torch.load("model_and_optimizer.pth")
+
+model = GPTModel(GPT_CONFIG_124M)
+model.load_state_dict(checkpoint["model_state_dict"])
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=0.0005, weight_decay=0.1)
+optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+model.train();
+```
+
+5.5 Loading pretrained weights from OpenAI
