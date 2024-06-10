@@ -10,9 +10,12 @@ print("matplotlib version:", version("matplotlib"))
 print("torch version:", version("torch"))
 print("tiktoken version:", version("tiktoken"))
 ```
+```bash
 matplotlib version: 3.7.2
 torch version: 2.2.1
 tiktoken version: 0.5.1
+```
+
 In this chapter, we implement a GPT-like LLM architecture; the next chapter will focus on training this LLM
 
 4.1 Coding an LLM architecture
