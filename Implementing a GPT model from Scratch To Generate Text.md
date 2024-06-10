@@ -18,7 +18,7 @@ tiktoken version: 0.5.1
 
 In this chapter, we implement a GPT-like LLM architecture; the next chapter will focus on training this LLM
 
-4.1 Coding an LLM architecture
+#### 4.1 Coding an LLM architecture
 Chapter 1 discussed models like GPT and Llama, which generate words sequentially and are based on the decoder part of the original transformer architecture
 Therefore, these LLMs are often referred to as "decoder-like" LLMs
 Compared to conventional deep learning models, LLMs are larger, mainly due to their vast number of parameters, not the amount of code
@@ -29,6 +29,7 @@ In this chapter, we consider embedding and model sizes akin to a small GPT-2 mod
 We'll specifically code the architecture of the smallest GPT-2 model (124 million parameters), as outlined in Radford et al.'s Language Models are Unsupervised Multitask Learners (note that the initial report lists it as 117M parameters, but this was later corrected in the model weight repository)
 Chapter 6 will show how to load pretrained weights into our implementation, which will be compatible with model sizes of 345, 762, and 1542 million parameters
 Configuration details for the 124 million parameter GPT-2 model include:
+```python
 GPT_CONFIG_124M = {
     "vocab_size": 50257,    # Vocabulary size
     "context_length": 1024, # Context length
@@ -38,6 +39,7 @@ GPT_CONFIG_124M = {
     "drop_rate": 0.1,       # Dropout rate
     "qkv_bias": False       # Query-Key-Value bias
 }
+```
 We use short variable names to avoid long lines of code later
 "vocab_size" indicates a vocabulary size of 50,257 words, supported by the BPE tokenizer discussed in Chapter 2
 "context_length" represents the model's maximum input token count, as enabled by positional embeddings covered in Chapter 2
@@ -47,6 +49,7 @@ We use short variable names to avoid long lines of code later
 "drop_rate" is the dropout mechanism's intensity, discussed in Chapter 3; 0.1 means dropping 10% of hidden units during training to mitigate overfitting
 "qkv_bias" decides if the Linear layers in the multi-head attention mechanism (from Chapter 3) should include a bias vector when computing query (Q), key (K), and value (V) tensors; we'll disable this option, which is standard practice in modern LLMs; however, we'll revisit this later when loading pretrained GPT-2 weights from OpenAI into our reimplementation in Chapter 6
 
+```python
 import torch
 import torch.nn as nn
 
@@ -131,7 +134,8 @@ tensor([[[-1.2034,  0.3201, -0.7130,  ..., -1.5548, -0.2390, -0.4667],
          [ 0.3567,  1.2698, -0.6398,  ..., -0.0162, -0.1296,  0.3717],
          [-0.2407, -0.7349, -0.5102,  ...,  2.0057, -0.3694,  0.1814]]],
        grad_fn=<UnsafeViewBackward0>)
-4.2 Normalizing activations with layer normalization
+```
+#### 4.2 Normalizing activations with layer normalization
 Layer normalization, also known as LayerNorm (Ba et al. 2016), centers the activations of a neural network layer around a mean of 0 and normalizes their variance to 1
 This stabilizes training and enables faster convergence to effective weights
 Layer normalization is applied both before and after the multi-head attention module within the transformer block, which we will implement later; it's also applied before the final output layer
@@ -236,7 +240,7 @@ Variance:
  tensor([[1.0000],
         [1.0000]], grad_fn=<VarBackward0>)
 
-4.3 Implementing a feed forward network with GELU activations
+#### 4.3 Implementing a feed forward network with GELU activations
 In this section, we implement a small neural network submodule that is used as part of the transformer block in LLMs
 We start with the activation function
 In deep learning, ReLU (Rectified Linear Unit) activation functions are commonly used due to their simplicity and effectiveness in various neural network architectures
@@ -304,7 +308,7 @@ print(out.shape)
 torch.Size([2, 3, 768])
 
 
-4.4 Adding shortcut connections
+#### 4.4 Adding shortcut connections
 Next, let's talk about the concept behind shortcut connections, also called skip or residual connections
 Originally, shortcut connections were proposed in deep networks for computer vision (residual networks) to mitigate vanishing gradient problems
 A shortcut connection creates an alternative shorter path for the gradient to flow through the network
@@ -381,7 +385,7 @@ layers.3.0.weight has gradient mean of 0.2665732204914093
 layers.4.0.weight has gradient mean of 1.3258540630340576
 As we can see based on the output above, shortcut connections prevent the gradients from vanishing in the early layers (towards layer.0)
 We will use this concept of a shortcut connection next when we implement a transformer block
-4.5 Connecting attention and linear layers in a transformer block
+#### 4.5 Connecting attention and linear layers in a transformer block
 In this section, we now combine the previous concepts into a so-called transformer block
 A transformer block combines the causal multi-head attention module from the previous chapter with the linear layers, the feed forward neural network we implemented in an earlier section
 In addition, the transformer block also uses dropout and shortcut connections
@@ -433,7 +437,7 @@ print("Output shape:", output.shape)
 Input shape: torch.Size([2, 4, 768])
 Output shape: torch.Size([2, 4, 768])
 
-4.6 Coding the GPT model
+#### 4.6 Coding the GPT model
 We are almost there: now let's plug in the transformer block into the architecture we coded at the very beginning of this chapter so that we obtain a useable GPT architecture
 Note that the transformer block is repeated multiple times; in the case of the smallest 124M GPT-2 model, we repeat it 12 times:
 
@@ -539,7 +543,7 @@ GPT2-XL:
 "emb_dim" = 1600
 "n_layers" = 48
 "n_heads" = 25
-4.7 Generating text
+#### 4.7 Generating text
 LLMs like the GPT model we implemented above are used to generate one word at a time
 
 The following generate_text_simple function implements greedy decoding, which is a simple and fast method to generate text
