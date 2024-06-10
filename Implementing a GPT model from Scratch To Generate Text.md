@@ -1,4 +1,5 @@
 Implementing a GPT model from Scratch To Generate Text
+```python
 from importlib.metadata import version
 
 import matplotlib
@@ -8,6 +9,7 @@ import torch
 print("matplotlib version:", version("matplotlib"))
 print("torch version:", version("torch"))
 print("tiktoken version:", version("tiktoken"))
+```
 matplotlib version: 3.7.2
 torch version: 2.2.1
 tiktoken version: 0.5.1
