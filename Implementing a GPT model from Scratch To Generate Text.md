@@ -98,7 +98,8 @@ class DummyLayerNorm(nn.Module):
     def forward(self, x):
         # This layer does nothing and just returns its input.
         return x
-
+```
+```python
 import tiktoken
 
 tokenizer = tiktoken.get_encoding("gpt2")
@@ -112,8 +113,12 @@ batch.append(torch.tensor(tokenizer.encode(txt1)))
 batch.append(torch.tensor(tokenizer.encode(txt2)))
 batch = torch.stack(batch, dim=0)
 print(batch)
+```
+```bash
 tensor([[6109, 3626, 6100,  345],
         [6109, 1110, 6622,  257]])
+```
+```python
 torch.manual_seed(123)
 model = DummyGPTModel(GPT_CONFIG_124M)
 
